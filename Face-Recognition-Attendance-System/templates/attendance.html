@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mark Attendance</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+
+    #video-feed {
+        width: 470px;
+        margin: 20px auto;
+        display: block;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        text-align: center; 
+    }
+    
+    #video-feed h2 {
+        font-size: 20px;
+        color: #333;
+        padding: 10px;
+        margin: 0;
+    }
+
+    #video-feed img {
+        width: 450px;
+        max-width: 450px;
+        height: auto;
+        border-radius: 8px;
+    }
+
+    form {
+        text-align: center;
+    }
+
+    button {
+        padding: 12px 30px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 200px;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Flash message styles */
+    .alert {
+        padding: 10px;
+        margin-top: 10px;
+        text-align: center;
+        border-radius: 5px;
+    }
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Make message container scrollable */
+    #messages-container {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mark {{ type_of_attendance.capitalize() }} Attendance</h1>
+
+  <div id="video-feed">
+      <h2>Video Feed</h2>
+      <!-- Added id="video-stream" to the img tag to properly reference it in JavaScript -->
+      <img id="video-stream" src="{{ url_for('video_feed', type_of_attendance=type_of_attendance) }}" />
+  </div>
+  
+  <div class="container">
+    <h2>Updates :</h2><br>
+    <div id="messages-container"></div> <!-- Dynamic message container -->
+  </div>
+
+  <h2 align="center">After Camera Loaded, Show Your Face For Atleast 3 Seconds.</h2>
+
+  <!-- Stop Button to stop session -->
+  <form method="GET" action="{{ url_for('index') }}"> <!-- Just use action to redirect to the index -->
+    <button type="submit" id="stop-button">Stop</button>
+</form>
+
+  <script>
+    // Function to fetch and display flash messages from the backend
+    function fetchMessages() {
+        fetch('/get_messages') // Assuming you have a route that sends flash messages
+            .then(response => response.json())
+            .then(messages => {
+                const messagesContainer = document.getElementById('messages-container');
+                messagesContainer.innerHTML = ''; // Clear the current messages
+                messages.forEach(message => {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.classList.add('alert', 'alert-success');
+                    alertDiv.textContent = message;
+                    messagesContainer.appendChild(alertDiv);
+                });
+            });
+    }
+
+    // Poll for new messages every 3 seconds
+    setInterval(fetchMessages, 3000);
+
+    // Stop the video feed and terminate the session
+    document.getElementById('stop-button').addEventListener('click', function(event) {
+        // Prevent form submission and page reload
+        event.preventDefault();
+        
+        // Find the video stream element
+        const videoElement = document.getElementById('video-stream');
+        
+        // Stop the video by setting the `src` to an empty string or null
+        videoElement.src = ""; // Stops the video feed
+
+        // Optionally, clear the message container if needed
+        document.getElementById('messages-container').innerHTML = '';
+
+        // You can also remove or hide the video feed if you want to visually stop it
+        videoElement.style.display = 'none'; // Hide the video stream
+
+        // Redirect to index.html after stopping the video feed
+        window.location.href = "{{ url_for('index') }}";  // Use Flask's `url_for` to generate the URL
+    });
+  </script>
+
+</body>
+</html>
